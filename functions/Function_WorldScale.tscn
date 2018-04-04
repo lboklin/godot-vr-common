@@ -1,0 +1,60 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="GDScript" id=1]
+
+script/source = "extends Spatial
+
+const WS_TRANSITION_TIME = 0.5
+const WS_STEP = 0.5
+
+const PRESS_COOLDOWN = 0.5
+
+var ws_transition_time = 0
+onready var to_scale = ARVRServer.world_scale
+onready var from_scale = ARVRServer.world_scale
+
+var press_cooldown = 0
+
+
+func _ready():
+	set_physics_process(true)
+
+func _physics_process(delta):
+
+
+	var controller = get_parent()
+	var region = controller.pad_region_pressed()
+
+	if press_cooldown > 0:
+		press_cooldown -= delta
+	else:
+		if region == controller.UP:
+	#		print(\"Scale up\")
+			change_ws(WS_STEP)
+		elif region == controller.DOWN:
+	#		print(\"Scale down\")
+			change_ws(-WS_STEP)
+
+	if ARVRServer.world_scale != to_scale:
+		update_ws(delta)
+
+func change_ws(value):
+	press_cooldown = PRESS_COOLDOWN
+	ws_transition_time = 0
+	from_scale = to_scale
+	to_scale = clamp(to_scale + value, WS_STEP, 4)
+	print(\"From scale: \", from_scale, \", To scale: \", to_scale)
+
+func update_ws(delta):
+	var progress = ws_transition_time / WS_TRANSITION_TIME
+	var new_scale = lerp(from_scale, to_scale, progress)
+	ARVRServer.world_scale = new_scale
+	if progress < 1:
+		ws_transition_time += delta
+"
+
+[node name="Function_WorldScale" type="Spatial" index="0"]
+
+script = SubResource( 1 )
+
+
